@@ -1,0 +1,47 @@
+@import '@fontsource/dm-sans/400.css';
+@import '@fontsource/dm-sans/500.css';
+@import '@fontsource/dm-sans/600.css';
+@import '@fontsource/dm-sans/700.css';
+@import 'tailwindcss';
+
+@theme {
+	/* Admin Design Tokens — extends Outra brand */
+	--color-brand-50: #EFF1FF;
+	--color-brand-500: #4D61F4;
+	--color-brand-600: #2E4BE9;
+
+	--color-primary: #4D61F4;
+	--color-primary-hover: #2E4BE9;
+	--color-primary-light: #EFF1FF;
+
+	--color-foreground: #131417;
+	--color-muted-foreground: #2D2E2E;
+	--color-text-muted: rgba(19, 20, 23, 0.45);
+
+	--color-background: #F6F5F1;
+	--color-surface-card: #FFFFFF;
+	--color-surface-subtle: #F6F7F8;
+
+	--color-border: rgba(19, 20, 23, 0.08);
+	--color-border-subtle: rgba(19, 20, 23, 0.15);
+
+	--color-accent: #C3FF98;
+
+	--font-sans: 'DM Sans', system-ui, sans-serif;
+
+	--radius-sm: 4px;
+	--radius-md: 12px;
+	--radius-lg: 16px;
+	--radius-xl: 24px;
+	--radius-full: 999px;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	font-family: var(--font-sans);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}

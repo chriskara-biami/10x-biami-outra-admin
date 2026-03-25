@@ -1,0 +1,65 @@
+# Dependencies
+node_modules/
+
+#docs
+/docs
+
+# Build output
+.svelte-kit/
+.vercel/
+build/
+dist/
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+!.env.example
+!.env.*.template
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage/
+
+# Security
+*.pem
+
+# JSON files
+JSON*
+
+# Claude
+Claude.md
+.claude
+
+# Screenshots
+screenshots/
+
+# Null files
+*nul
+
+# Documentation
+*.pdf
+documentation/
+documentation/*.md
+
+# Designs
+/application_designs
+
+# Examples
+html-examples/
+
+# MD Files
+SUPABASE_CONFIG.md
+TEST_CREDENTIALS.md
