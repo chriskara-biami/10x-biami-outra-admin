@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import type { RequestEvent } from '@sveltejs/kit';
-import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY } from '$env/static/public';
+import { env as publicEnv } from '$env/dynamic/public';
 import { env } from '$env/dynamic/private';
 
 /**
@@ -9,7 +9,7 @@ import { env } from '$env/dynamic/private';
  * Used for authentication only — not for cross-tenant queries.
  */
 export function createSupabaseServerClient(event: RequestEvent) {
-	return createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
+	return createServerClient(publicEnv.PUBLIC_SUPABASE_URL, publicEnv.PUBLIC_SUPABASE_ANON_KEY, {
 		cookies: {
 			getAll: () => event.cookies.getAll(),
 			setAll: (cookiesToSet) => {
@@ -36,7 +36,7 @@ export function createServiceRoleClient() {
 	if (!serviceRoleKey) {
 		throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured');
 	}
-	return createClient(PUBLIC_SUPABASE_URL, serviceRoleKey, {
+	return createClient(publicEnv.PUBLIC_SUPABASE_URL, serviceRoleKey, {
 		auth: {
 			autoRefreshToken: false,
 			persistSession: false
