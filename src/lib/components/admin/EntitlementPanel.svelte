@@ -3,9 +3,9 @@
 
 	interface Entitlement {
 		id: string;
-		type: string;
+		entitlement_type: string;
 		source: 'plan' | 'contract' | 'override';
-		status: 'active' | 'inactive';
+		granted: boolean;
 		expires_at?: string | null;
 		reason?: string;
 		granted_by?: string;
@@ -15,7 +15,7 @@
 		entitlements: Entitlement[];
 		orgId: string;
 		roles: string[];
-		onRefresh?: () => void;
+		onRefresh?: () => void | Promise<void>;
 	}
 
 	const { entitlements, orgId, roles, onRefresh }: Props = $props();
@@ -55,8 +55,7 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					org_id: orgId,
-					type: grantType,
-					enabled: grantEnabled,
+					entitlement_type: grantType,
 					reason: grantReason.trim(),
 					expires_at: grantExpiry || null
 				})
@@ -69,7 +68,7 @@
 			grantEnabled = true;
 			grantReason = '';
 			grantExpiry = '';
-			onRefresh?.();
+			await onRefresh?.();
 		} catch (err) {
 			console.error('Grant override failed:', err);
 		} finally {
@@ -92,7 +91,7 @@
 
 			revokeId = null;
 			revokeReason = '';
-			onRefresh?.();
+			await onRefresh?.();
 		} catch (err) {
 			console.error('Revoke failed:', err);
 		} finally {
@@ -190,18 +189,21 @@
 				<li class="px-5 py-3">
 					<div class="flex items-center justify-between">
 						<div class="flex items-center gap-2 flex-wrap">
-							<span class="text-sm font-medium text-gray-900">{ent.type}</span>
+							<span class="text-sm font-medium text-gray-900 capitalize">{ent.entitlement_type || '--'}</span>
 							<span
 								class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {sourceBadgeClass[ent.source] || 'bg-gray-100 text-gray-700'}"
 							>
 								{ent.source}
 							</span>
 							<span
-								class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {ent.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}"
+								class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium {ent.granted ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}"
 							>
-								{ent.status}
+								{ent.granted ? 'active' : 'inactive'}
 							</span>
 							<span class="text-xs text-gray-400">Expires: {formatExpiry(ent.expires_at)}</span>
+							{#if ent.reason}
+								<span class="text-xs text-gray-500">— {ent.reason}</span>
+							{/if}
 						</div>
 
 						{#if canMutate && ent.source === 'override'}

@@ -2,6 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { hasPermission } from '$lib/utils/permissions';
 import { createAuditEntry } from '$lib/utils/audit';
+import { PLAN_ENTITLEMENTS } from '$lib/config/plan-entitlements';
 
 export const POST: RequestHandler = async (event) => {
 	const { serviceClient, adminRoles, user, requestId } = event.locals;
@@ -35,6 +36,18 @@ export const POST: RequestHandler = async (event) => {
 
 		if (insertError) {
 			throw new Error(`Failed to create entitlement: ${insertError.message}`);
+		}
+
+		// If entitlement type matches a known plan, update the org's plan
+		if (entitlement_type in PLAN_ENTITLEMENTS) {
+			const { error: planError } = await serviceClient
+				.from('organizations')
+				.update({ plan: entitlement_type })
+				.eq('id', org_id);
+
+			if (planError) {
+				console.error(`[${requestId}] Failed to update org plan to ${entitlement_type}:`, planError);
+			}
 		}
 
 		// Create audit entry

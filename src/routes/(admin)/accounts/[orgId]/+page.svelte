@@ -224,7 +224,7 @@
 				<h2 class="text-base font-semibold text-[#131417]">Entitlements ({entitlements.length})</h2>
 			</div>
 			<div class="p-6">
-				<EntitlementPanel orgId={org.id} {entitlements} roles={data.roles} />
+				<EntitlementPanel orgId={org.id} {entitlements} roles={data.roles} onRefresh={() => invalidateAll()} />
 			</div>
 		</div>
 

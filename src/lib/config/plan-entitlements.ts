@@ -5,24 +5,7 @@
 
 export const PLAN_ENTITLEMENTS: Record<string, string[]> = {
 	free: ['feature:insight_basic'],
-	founder: ['activation', 'connector:klaviyo', 'feature:insight_basic'],
-	starter: ['activation', 'connector:klaviyo', 'feature:insight_basic'],
-	pro: [
-		'activation',
-		'connector:klaviyo',
-		'connector:meta',
-		'feature:tag_filtering'
-	],
-	enterprise: [
-		'activation',
-		'connector:klaviyo',
-		'connector:meta',
-		'connector:tiktok',
-		'connector:google_ads',
-		'connector:shopify',
-		'feature:tag_filtering',
-		'feature:new_etl_progress'
-	]
+	founder: ['activation', 'connector:klaviyo', 'feature:insight_basic']
 };
 
 /**
@@ -44,29 +27,11 @@ export const PLAN_PRICING: Record<string, PlanPricing> = {
 		description: 'Basic insights only'
 	},
 	founder: {
-		monthlyPence: 9900,
-		annualPence: 95000,
+		monthlyPence: 59900,
+		annualPence: 0,
 		label: 'Founder',
 		description: 'Early-adopter pricing — locked in for life',
 		isFounder: true
-	},
-	starter: {
-		monthlyPence: 14900,
-		annualPence: 143000,
-		label: 'Starter',
-		description: 'Activation + Klaviyo connector'
-	},
-	pro: {
-		monthlyPence: 29900,
-		annualPence: 287000,
-		label: 'Pro',
-		description: 'Multi-channel activation + tag filtering'
-	},
-	enterprise: {
-		monthlyPence: 0,
-		annualPence: 0,
-		label: 'Enterprise',
-		description: 'Custom pricing — contact sales'
 	}
 };
 

@@ -12,7 +12,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	const safePerPage = allowedPerPage.includes(perPage) ? perPage : 10;
 
 	// Validate plan filter
-	const allowedPlans = ['free', 'founder', 'starter', 'pro', 'enterprise'];
+	const allowedPlans = ['free', 'founder'];
 	const safePlan = plan && allowedPlans.includes(plan) ? plan : undefined;
 
 	try {

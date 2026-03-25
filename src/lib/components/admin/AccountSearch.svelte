@@ -3,24 +3,32 @@
 
 	interface Props {
 		query?: string;
+		perPage?: number;
+		plan?: string;
+		basePath?: string;
 	}
 
-	const { query = '' }: Props = $props();
+	const { query = '', perPage, plan, basePath = '/accounts' }: Props = $props();
 
 	let searchQuery = $state(query);
 
 	function handleSubmit(e: Event) {
 		e.preventDefault();
 		const params = new URLSearchParams();
-		if (searchQuery.trim()) {
-			params.set('q', searchQuery.trim());
-		}
-		goto(`/accounts?${params.toString()}`);
+		if (searchQuery.trim()) params.set('q', searchQuery.trim());
+		params.set('page', '1');
+		if (perPage) params.set('perPage', String(perPage));
+		if (plan) params.set('plan', plan);
+		goto(`${basePath}?${params.toString()}`);
 	}
 
 	function handleClear() {
 		searchQuery = '';
-		goto('/accounts');
+		const params = new URLSearchParams();
+		params.set('page', '1');
+		if (perPage) params.set('perPage', String(perPage));
+		if (plan) params.set('plan', plan);
+		goto(`${basePath}?${params.toString()}`);
 	}
 </script>
 
