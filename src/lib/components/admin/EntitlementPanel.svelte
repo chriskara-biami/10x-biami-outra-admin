@@ -122,14 +122,15 @@
 					<label for="grant-type" class="mb-1 block text-xs font-medium text-gray-600">
 						Entitlement Type
 					</label>
-					<input
+					<select
 						id="grant-type"
-						type="text"
 						bind:value={grantType}
-						placeholder="e.g. enrichment_credits"
 						required
 						class="w-full rounded-lg border border-[rgba(19,20,23,0.15)] bg-white px-3 py-2 text-sm outline-none focus:border-[#2E4BE9] focus:ring-1 focus:ring-[#2E4BE9]"
-					/>
+					>
+						<option value="" disabled>Select entitlement type...</option>
+						<option value="founder">Founder</option>
+					</select>
 				</div>
 
 				<div>

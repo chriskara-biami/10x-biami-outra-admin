@@ -42,6 +42,8 @@
 				<thead>
 					<tr class="border-b border-[rgba(19,20,23,0.08)] bg-[#F9F9F8]">
 						<th class="px-6 py-3 text-left font-medium text-[#656767]">Date</th>
+						<th class="px-6 py-3 text-left font-medium text-[#656767]">Organization</th>
+						<th class="px-6 py-3 text-left font-medium text-[#656767]">Owner Email</th>
 						<th class="px-6 py-3 text-left font-medium text-[#656767]">Action</th>
 						<th class="px-6 py-3 text-left font-medium text-[#656767]">From Plan</th>
 						<th class="px-6 py-3 text-left font-medium text-[#656767]">To Plan</th>
@@ -53,6 +55,15 @@
 					{#each data.entries as entry}
 						<tr class="border-b border-[rgba(19,20,23,0.05)] hover:bg-[#FAFAF9] transition-colors">
 							<td class="px-6 py-3 text-[#656767]">{formatDate(entry.created_at)}</td>
+							<td class="px-6 py-3">
+								<div class="flex flex-col">
+									<span class="font-medium text-[#131417]">{entry.org_name || '--'}</span>
+									{#if entry.org_id}
+										<span class="text-xs text-[#656767] font-mono">{entry.org_id.slice(0, 8)}...</span>
+									{/if}
+								</div>
+							</td>
+							<td class="px-6 py-3 text-[#656767]">{entry.owner_email || '--'}</td>
 							<td class="px-6 py-3 text-[#131417]">{entry.action || entry.action_type || '--'}</td>
 							<td class="px-6 py-3">
 								<span class="capitalize text-[#131417]">{entry.from_plan || '--'}</span>
@@ -63,12 +74,16 @@
 							<td class="px-6 py-3 text-[#131417]">
 								{entry.amount != null ? `$${Number(entry.amount).toFixed(2)}` : '--'}
 							</td>
-							<td class="px-6 py-3 text-[#656767]">{entry.performed_by || entry.admin_user_id || '--'}</td>
+							<td class="px-6 py-3">
+								<div class="flex flex-col">
+									<span class="text-[#656767]">{entry.admin_email || entry.performed_by || entry.admin_user_id || '--'}</span>
+								</div>
+							</td>
 						</tr>
 					{/each}
 					{#if data.entries.length === 0}
 						<tr>
-							<td colspan="6" class="px-6 py-8 text-center text-[#656767]">No billing history found</td>
+							<td colspan="8" class="px-6 py-8 text-center text-[#656767]">No billing history found</td>
 						</tr>
 					{/if}
 				</tbody>

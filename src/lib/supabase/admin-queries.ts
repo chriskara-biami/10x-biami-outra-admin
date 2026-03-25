@@ -163,7 +163,8 @@ export async function listAllAccounts(
 	serviceClient: SupabaseClient,
 	page: number = 1,
 	perPage: number = 30,
-	query?: string
+	query?: string,
+	plan?: string
 ): Promise<{ results: AccountResult[]; total: number }> {
 	// 1. Fetch paginated orgs
 	let orgQuery = serviceClient
@@ -172,6 +173,10 @@ export async function listAllAccounts(
 
 	if (query) {
 		orgQuery = orgQuery.ilike('name', `%${query}%`);
+	}
+
+	if (plan) {
+		orgQuery = orgQuery.eq('plan', plan);
 	}
 
 	const from = (page - 1) * perPage;

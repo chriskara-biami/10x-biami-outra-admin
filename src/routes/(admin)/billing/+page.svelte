@@ -24,6 +24,52 @@
 
 	const plans = ['free', 'founder', 'starter', 'pro', 'enterprise'];
 
+	// Users list pagination
+	const perPageOptions = [10, 20, 50];
+	const totalPages = $derived(Math.max(1, Math.ceil(data.total / data.perPage)));
+	let userSearch = $state(data.search || '');
+	let planFilter = $state(data.plan || '');
+
+	function buildParams(overrides: Record<string, string> = {}): URLSearchParams {
+		const params = new URLSearchParams();
+		const page = overrides.page ?? String(data.page);
+		const perPage = overrides.perPage ?? String(data.perPage);
+		const q = overrides.q ?? userSearch.trim();
+		const plan = overrides.plan ?? planFilter;
+
+		params.set('page', page);
+		params.set('perPage', perPage);
+		if (q) params.set('q', q);
+		if (plan) params.set('plan', plan);
+		return params;
+	}
+
+	function goToPage(page: number) {
+		goto(`/billing?${buildParams({ page: String(page) }).toString()}`);
+	}
+
+	function changePerPage(newPerPage: number) {
+		goto(`/billing?${buildParams({ page: '1', perPage: String(newPerPage) }).toString()}`);
+	}
+
+	function searchUsers() {
+		goto(`/billing?${buildParams({ page: '1' }).toString()}`);
+	}
+
+	function changePlanFilter(plan: string) {
+		planFilter = plan;
+		goto(`/billing?${buildParams({ page: '1', plan }).toString()}`);
+	}
+
+	function formatDate(dateStr: string | null): string {
+		if (!dateStr) return '--';
+		return new Date(dateStr).toLocaleDateString('en-GB', {
+			day: 'numeric',
+			month: 'short',
+			year: 'numeric'
+		});
+	}
+
 	async function searchOrgs() {
 		if (!orgSearch.trim()) return;
 		searching = true;
@@ -280,6 +326,150 @@
 					{/if}
 				</div>
 			{/if}
+		{/if}
+	</div>
+
+	<!-- Users List -->
+	<div class="bg-white rounded-xl border border-[rgba(19,20,23,0.15)] overflow-hidden">
+		<div class="p-6 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+			<h2 class="text-base font-semibold text-[#131417]">All Users</h2>
+			<div class="flex items-center gap-3">
+				<div class="flex gap-2">
+					<input
+						type="text"
+						bind:value={userSearch}
+						placeholder="Search by org name..."
+						class="px-3 py-1.5 text-sm border border-[rgba(19,20,23,0.15)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E4BE9]/30 focus:border-[#2E4BE9]"
+						onkeydown={(e) => e.key === 'Enter' && searchUsers()}
+					/>
+					<button
+						onclick={searchUsers}
+						class="px-3 py-1.5 text-sm font-medium text-white bg-[#2E4BE9] hover:bg-[#4D61F4] rounded-lg transition-colors"
+					>
+						Search
+					</button>
+				</div>
+				<div class="flex items-center gap-2">
+					<label for="plan-filter" class="text-sm text-[#656767]">Plan</label>
+					<select
+						id="plan-filter"
+						value={data.plan}
+						onchange={(e) => changePlanFilter((e.target as HTMLSelectElement).value)}
+						class="px-2 py-1.5 text-sm border border-[rgba(19,20,23,0.15)] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#2E4BE9]/30"
+					>
+						<option value="">All</option>
+						{#each plans as plan}
+							<option value={plan} class="capitalize">{plan}</option>
+						{/each}
+					</select>
+				</div>
+				<div class="flex items-center gap-2">
+					<label for="per-page" class="text-sm text-[#656767]">Show</label>
+					<select
+						id="per-page"
+						value={data.perPage}
+						onchange={(e) => changePerPage(Number((e.target as HTMLSelectElement).value))}
+						class="px-2 py-1.5 text-sm border border-[rgba(19,20,23,0.15)] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#2E4BE9]/30"
+					>
+						{#each perPageOptions as opt}
+							<option value={opt}>{opt}</option>
+						{/each}
+					</select>
+				</div>
+			</div>
+		</div>
+		<div class="overflow-x-auto">
+			<table class="w-full text-sm">
+				<thead>
+					<tr class="border-b border-[rgba(19,20,23,0.08)] bg-[#F9F9F8]">
+						<th class="px-6 py-3 text-left font-medium text-[#656767]">Organization</th>
+						<th class="px-6 py-3 text-left font-medium text-[#656767]">Email</th>
+						<th class="px-6 py-3 text-left font-medium text-[#656767]">Plan</th>
+						<th class="px-6 py-3 text-left font-medium text-[#656767]">Status</th>
+						<th class="px-6 py-3 text-left font-medium text-[#656767]">Connection</th>
+						<th class="px-6 py-3 text-left font-medium text-[#656767]">Created</th>
+					</tr>
+				</thead>
+				<tbody>
+					{#each data.accounts as account}
+						<tr class="border-b border-[rgba(19,20,23,0.05)] hover:bg-[#FAFAF9] transition-colors">
+							<td class="px-6 py-3">
+								<div class="flex flex-col">
+									<span class="font-medium text-[#131417]">{account.org_name}</span>
+									<span class="text-xs text-[#656767] font-mono">{account.org_id.slice(0, 8)}...</span>
+								</div>
+							</td>
+							<td class="px-6 py-3 text-[#656767]">{account.email || '--'}</td>
+							<td class="px-6 py-3">
+								<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize
+									{account.plan === 'enterprise' ? 'bg-purple-50 text-purple-700' :
+									 account.plan === 'pro' ? 'bg-blue-50 text-blue-700' :
+									 account.plan === 'starter' ? 'bg-green-50 text-green-700' :
+									 account.plan === 'founder' ? 'bg-[#EFF1FF] text-[#4D61F4]' :
+									 'bg-gray-100 text-gray-600'}">
+									{account.plan}
+								</span>
+							</td>
+							<td class="px-6 py-3">
+								<span class="inline-flex items-center gap-1 text-xs capitalize
+									{account.plan_status === 'active' ? 'text-green-700' :
+									 account.plan_status === 'paused' ? 'text-amber-600' :
+									 'text-[#656767]'}">
+									<span class="w-1.5 h-1.5 rounded-full
+										{account.plan_status === 'active' ? 'bg-green-500' :
+										 account.plan_status === 'paused' ? 'bg-amber-500' :
+										 'bg-gray-400'}"></span>
+									{account.plan_status}
+								</span>
+							</td>
+							<td class="px-6 py-3 text-[#656767] text-xs capitalize">{account.connection_status || '--'}</td>
+							<td class="px-6 py-3 text-[#656767]">{formatDate(account.created_at)}</td>
+						</tr>
+					{/each}
+					{#if data.accounts.length === 0}
+						<tr>
+							<td colspan="6" class="px-6 py-8 text-center text-[#656767]">No users found</td>
+						</tr>
+					{/if}
+				</tbody>
+			</table>
+		</div>
+
+		<!-- Pagination -->
+		{#if data.total > 0}
+			<div class="flex items-center justify-between px-6 py-4 border-t border-[rgba(19,20,23,0.08)]">
+				<p class="text-sm text-[#656767]">
+					Showing {(data.page - 1) * data.perPage + 1} - {Math.min(data.page * data.perPage, data.total)} of {data.total}
+				</p>
+				<div class="flex items-center gap-2">
+					<button
+						onclick={() => goToPage(data.page - 1)}
+						disabled={data.page <= 1}
+						class="px-3 py-1.5 text-sm border border-[rgba(19,20,23,0.15)] rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F6F7F8] transition-colors"
+					>
+						Previous
+					</button>
+					{#each Array.from({ length: totalPages }, (_, i) => i + 1) as p}
+						{#if p === 1 || p === totalPages || (p >= data.page - 1 && p <= data.page + 1)}
+							<button
+								onclick={() => goToPage(p)}
+								class="px-3 py-1.5 text-sm rounded-lg transition-colors {p === data.page ? 'bg-[#2E4BE9] text-white' : 'border border-[rgba(19,20,23,0.15)] hover:bg-[#F6F7F8]'}"
+							>
+								{p}
+							</button>
+						{:else if p === data.page - 2 || p === data.page + 2}
+							<span class="px-1 text-[#656767]">...</span>
+						{/if}
+					{/each}
+					<button
+						onclick={() => goToPage(data.page + 1)}
+						disabled={data.page >= totalPages}
+						class="px-3 py-1.5 text-sm border border-[rgba(19,20,23,0.15)] rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F6F7F8] transition-colors"
+					>
+						Next
+					</button>
+				</div>
+			</div>
 		{/if}
 	</div>
 </div>
