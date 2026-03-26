@@ -21,8 +21,7 @@
 
 	const navItems: NavItem[] = [
 		{ href: '/accounts', label: 'Accounts', permissions: ['accounts:view'] },
-		{ href: '/billing', label: 'Billing', permissions: ['billing:view'] },
-		{ href: '/audit-log', label: 'Audit Log', permissions: ['audit:view'] }
+		{ href: '/billing', label: 'Subscriptions', permissions: ['billing:view'] }
 	];
 
 	function isActive(href: string): boolean {

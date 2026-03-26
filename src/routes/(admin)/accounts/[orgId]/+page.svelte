@@ -11,7 +11,6 @@
 	const connections = $derived(data.connections || []);
 	const destinations = $derived(data.destinations || []);
 	const entitlements = $derived(data.entitlements || []);
-	const stats = $derived(data.enrichmentStats);
 	const auditLog = $derived(data.auditLog || []);
 
 	function statusColor(status: string): string {
@@ -197,41 +196,20 @@
 			</div>
 		</div>
 
-		<!-- Enrichment Stats -->
-		<div class="bg-white rounded-xl border border-[rgba(19,20,23,0.15)] overflow-hidden">
-			<div class="px-6 py-4 border-b border-[rgba(19,20,23,0.08)]">
-				<h2 class="text-base font-semibold text-[#131417]">Enrichment Stats</h2>
-			</div>
-			<div class="grid grid-cols-3 divide-x divide-[rgba(19,20,23,0.08)]">
-				<div class="px-6 py-5 text-center">
-					<p class="text-2xl font-bold text-[#131417]">{stats.totalRecords.toLocaleString()}</p>
-					<p class="text-xs text-[#656767] mt-1">Total Records</p>
-				</div>
-				<div class="px-6 py-5 text-center">
-					<p class="text-2xl font-bold text-[#131417]">{stats.addressMatched.toLocaleString()}</p>
-					<p class="text-xs text-[#656767] mt-1">Address Matched</p>
-				</div>
-				<div class="px-6 py-5 text-center">
-					<p class="text-2xl font-bold text-[#131417]">{stats.enrichedProfiles.toLocaleString()}</p>
-					<p class="text-xs text-[#656767] mt-1">Enriched</p>
-				</div>
-			</div>
-		</div>
-
-		<!-- Entitlements -->
+		<!-- Subscription -->
 		<div class="bg-white rounded-xl border border-[rgba(19,20,23,0.15)] overflow-hidden lg:col-span-2">
 			<div class="px-6 py-4 border-b border-[rgba(19,20,23,0.08)]">
-				<h2 class="text-base font-semibold text-[#131417]">Entitlements ({entitlements.length})</h2>
+				<h2 class="text-base font-semibold text-[#131417]">Subscription ({entitlements.length})</h2>
 			</div>
 			<div class="p-6">
 				<EntitlementPanel orgId={org.id} {entitlements} roles={data.roles} onRefresh={() => invalidateAll()} />
 			</div>
 		</div>
 
-		<!-- Recent Admin Actions -->
+		<!-- Recent Action Log -->
 		<div class="bg-white rounded-xl border border-[rgba(19,20,23,0.15)] overflow-hidden lg:col-span-2">
 			<div class="px-6 py-4 border-b border-[rgba(19,20,23,0.08)]">
-				<h2 class="text-base font-semibold text-[#131417]">Recent Admin Actions</h2>
+				<h2 class="text-base font-semibold text-[#131417]">Recent Action Log</h2>
 			</div>
 			<div class="overflow-x-auto">
 				<table class="w-full text-sm">

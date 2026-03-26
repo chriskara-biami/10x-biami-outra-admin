@@ -4,6 +4,7 @@ import { maskEmail } from '$lib/utils/masking';
 export const load: PageServerLoad = async ({ url, locals }) => {
 	const page = parseInt(url.searchParams.get('page') || '1', 10);
 	const orgId = url.searchParams.get('org_id') || undefined;
+	const search = url.searchParams.get('q') || undefined;
 
 	const perPage = 25;
 	const offset = (page - 1) * perPage;
@@ -89,16 +90,30 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		}
 	}
 
-	const enrichedEntries = entries.map((entry) => ({
+	let enrichedEntries = entries.map((entry) => ({
 		...entry,
 		org_name: orgMap.get(entry.org_id) || null,
 		owner_email: orgEmailMap.get(entry.org_id) || null,
 		admin_email: adminEmailMap.get(entry.admin_user_id || entry.performed_by) || null
 	}));
 
+	// Client-side search filtering (across org name, email, org ID)
+	if (search) {
+		const q = search.toLowerCase();
+		enrichedEntries = enrichedEntries.filter((entry) => {
+			return (
+				(entry.org_name && entry.org_name.toLowerCase().includes(q)) ||
+				(entry.owner_email && entry.owner_email.toLowerCase().includes(q)) ||
+				(entry.org_id && entry.org_id.toLowerCase().includes(q)) ||
+				(entry.stripe_transaction_id && entry.stripe_transaction_id.toLowerCase().includes(q))
+			);
+		});
+	}
+
 	return {
 		entries: enrichedEntries,
-		total: count || 0,
-		page
+		total: search ? enrichedEntries.length : (count || 0),
+		page,
+		search: search || ''
 	};
 };

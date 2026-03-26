@@ -16,31 +16,34 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	const safePlan = plan && allowedPlans.includes(plan) ? plan : undefined;
 
 	try {
-		const { results, total } = await listAllAccounts(
-			locals.serviceClient,
-			page,
-			safePerPage,
-			search,
-			safePlan
-		);
+		const [accountsResult, pricingResult] = await Promise.all([
+			listAllAccounts(locals.serviceClient, page, safePerPage, search, safePlan),
+			locals.serviceClient
+				.from('plan_pricing')
+				.select('*')
+				.eq('is_active', true)
+				.order('created_at', { ascending: true })
+		]);
 
 		return {
-			accounts: results,
-			total,
+			accounts: accountsResult.results,
+			total: accountsResult.total,
 			page,
 			perPage: safePerPage,
 			search: search || '',
-			plan: safePlan || ''
+			plan: safePlan || '',
+			pricing: pricingResult.data || []
 		};
 	} catch (err) {
-		console.error('[Billing] Failed to load accounts:', err);
+		console.error('[Billing] Failed to load:', err);
 		return {
 			accounts: [],
 			total: 0,
 			page: 1,
 			perPage: safePerPage,
 			search: search || '',
-			plan: safePlan || ''
+			plan: safePlan || '',
+			pricing: []
 		};
 	}
 };

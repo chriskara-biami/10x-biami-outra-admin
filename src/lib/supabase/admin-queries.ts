@@ -153,6 +153,7 @@ export type AccountResult = {
 	has_activation: boolean;
 	has_override: boolean;
 	created_at: string;
+	last_sign_in_at: string | null;
 };
 
 /**
@@ -231,10 +232,12 @@ export async function listAllAccounts(
 			: Promise.resolve({ data: [] })
 	]);
 
-	// Build user email map
+	// Build user email map and last sign-in map
 	const emailByUserId = new Map<string, string>();
+	const lastSignInByUserId = new Map<string, string | null>();
 	for (const u of usersResult.data?.users || []) {
 		emailByUserId.set(u.id, u.email || '');
+		lastSignInByUserId.set(u.id, u.last_sign_in_at || null);
 	}
 
 	// Build connector status map (first connector per user)
@@ -265,7 +268,8 @@ export async function listAllAccounts(
 			connection_status: connectionStatus,
 			has_activation: hasActivation,
 			has_override: hasOverride,
-			created_at: org.created_at
+			created_at: org.created_at,
+			last_sign_in_at: ownerId ? lastSignInByUserId.get(ownerId) || null : null
 		};
 	});
 

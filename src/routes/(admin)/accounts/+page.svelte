@@ -14,6 +14,58 @@
 	const perPageOptions = [10, 20, 50];
 	let planFilter = $state(data.plan || '');
 
+	// Sorting state
+	let sortColumn = $state<string>('');
+	let sortDirection = $state<'asc' | 'desc'>('asc');
+
+	// Column filters
+	let overrideFilter = $state<'' | 'yes' | 'no'>('');
+
+	function toggleSort(column: string) {
+		if (sortColumn === column) {
+			sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+		} else {
+			sortColumn = column;
+			sortDirection = 'asc';
+		}
+	}
+
+	function compareValues(a: any, b: any, dir: 'asc' | 'desc'): number {
+		if (a == null && b == null) return 0;
+		if (a == null) return dir === 'asc' ? 1 : -1;
+		if (b == null) return dir === 'asc' ? -1 : 1;
+		if (typeof a === 'string') return dir === 'asc' ? a.localeCompare(b) : b.localeCompare(a);
+		if (typeof a === 'boolean') return dir === 'asc' ? (a === b ? 0 : a ? -1 : 1) : (a === b ? 0 : a ? 1 : -1);
+		return dir === 'asc' ? a - b : b - a;
+	}
+
+	const filteredAndSorted = $derived.by(() => {
+		let rows = [...results];
+
+		// Apply column filters
+		if (overrideFilter) {
+			const val = overrideFilter === 'yes';
+			rows = rows.filter((r) => r.has_override === val);
+		}
+
+		// Apply sort
+		if (sortColumn) {
+			rows.sort((a, b) => {
+				const keyMap: Record<string, string> = {
+					email: 'email',
+					plan: 'plan',
+					changed_manually: 'has_override',
+					last_logged_in: 'last_sign_in_at',
+					created: 'created_at'
+				};
+				const key = keyMap[sortColumn] || sortColumn;
+				return compareValues((a as any)[key], (b as any)[key], sortDirection);
+			});
+		}
+
+		return rows;
+	});
+
 	function buildParams(overrides: Record<string, string> = {}): URLSearchParams {
 		const params = new URLSearchParams();
 		const p = overrides.page ?? String(data.page);
@@ -68,6 +120,11 @@
 			year: 'numeric'
 		});
 	}
+
+	function sortIcon(column: string): string {
+		if (sortColumn !== column) return '↕';
+		return sortDirection === 'asc' ? '↑' : '↓';
+	}
 </script>
 
 <svelte:head>
@@ -97,6 +154,18 @@
 					</select>
 				</div>
 				<div class="flex items-center gap-2">
+					<label for="override-filter" class="text-sm text-[#656767] whitespace-nowrap">Changed Manually</label>
+					<select
+						id="override-filter"
+						bind:value={overrideFilter}
+						class="px-2 py-1.5 text-sm border border-[rgba(19,20,23,0.15)] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-[#2E4BE9]/30"
+					>
+						<option value="">All</option>
+						<option value="yes">Yes</option>
+						<option value="no">No</option>
+					</select>
+				</div>
+				<div class="flex items-center gap-2">
 					<label for="per-page" class="text-sm text-[#656767] whitespace-nowrap">Show</label>
 					<select
 						id="per-page"
@@ -115,27 +184,29 @@
 			<table class="w-full text-sm">
 				<thead>
 					<tr class="border-b border-[rgba(19,20,23,0.08)] bg-[#F9F9F8]">
-						<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider">Org Name</th>
-						<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider">Email</th>
-						<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider">Plan</th>
-						<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider">Status</th>
-						<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider">Connection</th>
-						<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider">Activation</th>
-						<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider">Override</th>
-						<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider">Created</th>
+						<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider cursor-pointer select-none hover:text-[#131417]" onclick={() => toggleSort('email')}>
+							Email <span class="text-[10px]">{sortIcon('email')}</span>
+						</th>
+						<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider cursor-pointer select-none hover:text-[#131417]" onclick={() => toggleSort('plan')}>
+							Plan <span class="text-[10px]">{sortIcon('plan')}</span>
+						</th>
+						<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider cursor-pointer select-none hover:text-[#131417]" onclick={() => toggleSort('changed_manually')}>
+							Changed Manually <span class="text-[10px]">{sortIcon('changed_manually')}</span>
+						</th>
+						<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider cursor-pointer select-none hover:text-[#131417]" onclick={() => toggleSort('last_logged_in')}>
+							Last Logged In <span class="text-[10px]">{sortIcon('last_logged_in')}</span>
+						</th>
+						<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider cursor-pointer select-none hover:text-[#131417]" onclick={() => toggleSort('created')}>
+							Created <span class="text-[10px]">{sortIcon('created')}</span>
+						</th>
 					</tr>
 				</thead>
 				<tbody>
-					{#each results as row}
-						<tr class="border-b border-[rgba(19,20,23,0.05)] hover:bg-[#FAFAF9] transition-colors">
-							<td class="px-6 py-3.5">
-								<a
-									href="/accounts/{row.org_id}"
-									class="text-[#2E4BE9] hover:text-[#4D61F4] font-medium hover:underline"
-								>
-									{row.org_name}
-								</a>
-							</td>
+					{#each filteredAndSorted as row}
+						<tr
+							class="border-b border-[rgba(19,20,23,0.05)] hover:bg-[#FAFAF9] transition-colors cursor-pointer"
+							onclick={() => goto(`/accounts/${row.org_id}`)}
+						>
 							<td class="px-6 py-3.5 text-[#131417]">{row.email || '--'}</td>
 							<td class="px-6 py-3.5">
 								<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize
@@ -148,28 +219,16 @@
 								</span>
 							</td>
 							<td class="px-6 py-3.5">
-								<span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium {statusColor(row.plan_status)}">
-									{row.plan_status || 'unknown'}
-								</span>
-							</td>
-							<td class="px-6 py-3.5">
-								<span class="text-[#131417]">{row.connection_status || 'none'}</span>
-							</td>
-							<td class="px-6 py-3.5">
-								<span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium {boolBadge(row.has_activation)}">
-									{row.has_activation ? 'Yes' : 'No'}
-								</span>
-							</td>
-							<td class="px-6 py-3.5">
 								<span class="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium {boolBadge(row.has_override)}">
 									{row.has_override ? 'Yes' : 'No'}
 								</span>
 							</td>
+							<td class="px-6 py-3.5 text-[#656767]">{formatDate(row.last_sign_in_at)}</td>
 							<td class="px-6 py-3.5 text-[#656767]">{formatDate(row.created_at)}</td>
 						</tr>
 					{:else}
 						<tr>
-							<td colspan="8" class="px-6 py-12 text-center text-[#656767]">
+							<td colspan="5" class="px-6 py-12 text-center text-[#656767]">
 								{#if data.query}
 									No accounts found for "{data.query}"
 								{:else}
