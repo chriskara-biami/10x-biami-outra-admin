@@ -7,7 +7,7 @@
 	let { data }: { data: PageData } = $props();
 
 	// Sub-tab state
-	let activeTab = $state<'users' | 'pricing'>('users');
+	let activeTab = $state<'users' | 'pricing' | 'logs'>('users');
 
 	// Users list pagination
 	const perPageOptions = [10, 20, 50];
@@ -48,6 +48,47 @@
 				};
 				const key = keyMap[sortColumn] || sortColumn;
 				return compareValues(a[key], b[key], sortDirection);
+			});
+		}
+
+		return rows;
+	});
+
+	// Logs sorting state
+	let logSortColumn = $state<string>('');
+	let logSortDirection = $state<'asc' | 'desc'>('asc');
+
+	function toggleLogSort(column: string) {
+		if (logSortColumn === column) {
+			logSortDirection = logSortDirection === 'asc' ? 'desc' : 'asc';
+		} else {
+			logSortColumn = column;
+			logSortDirection = 'asc';
+		}
+	}
+
+	function logSortIcon(column: string): string {
+		if (logSortColumn !== column) return '↕';
+		return logSortDirection === 'asc' ? '↑' : '↓';
+	}
+
+	const filteredAndSortedLogs = $derived.by(() => {
+		let rows = [...((data as any).historyEntries || [])];
+
+		if (logSortColumn) {
+			rows.sort((a: any, b: any) => {
+				const keyMap: Record<string, string> = {
+					date: 'created_at',
+					organization: 'org_name',
+					email: 'owner_email',
+					action: 'action',
+					from_plan: 'from_plan',
+					to_plan: 'to_plan',
+					amount: 'amount',
+					performed_by: 'admin_email'
+				};
+				const key = keyMap[logSortColumn] || logSortColumn;
+				return compareValues(a[key], b[key], logSortDirection);
 			});
 		}
 
@@ -206,14 +247,6 @@
 <div class="max-w-[1600px] mx-auto space-y-6">
 	<div class="flex items-center justify-between">
 		<h1 class="text-2xl font-bold text-[#131417]">Subscriptions</h1>
-		<div class="flex items-center gap-3">
-			<a
-				href="/billing/history"
-				class="px-4 py-2 text-sm font-medium text-[#656767] hover:text-[#131417] bg-white border border-[rgba(19,20,23,0.15)] rounded-lg transition-colors"
-			>
-				Subscription History Log
-			</a>
-		</div>
 	</div>
 
 	<!-- Sub-tabs -->
@@ -229,6 +262,12 @@
 			class="px-4 py-2 text-sm font-medium rounded-md transition-colors {activeTab === 'pricing' ? 'bg-[#2E4BE9] text-white' : 'text-[#656767] hover:text-[#131417] hover:bg-[#F6F7F8]'}"
 		>
 			Pricing
+		</button>
+		<button
+			onclick={() => (activeTab = 'logs')}
+			class="px-4 py-2 text-sm font-medium rounded-md transition-colors {activeTab === 'logs' ? 'bg-[#2E4BE9] text-white' : 'text-[#656767] hover:text-[#131417] hover:bg-[#F6F7F8]'}"
+		>
+			Subscription Logs
 		</button>
 	</div>
 
@@ -364,7 +403,7 @@
 				</div>
 			{/if}
 		</div>
-	{:else}
+	{:else if activeTab === 'pricing'}
 		<!-- Pricing Management -->
 		<div class="bg-white rounded-2xl border border-[rgba(19,20,23,0.15)] overflow-hidden">
 			<div class="px-6 py-4 border-b border-[rgba(19,20,23,0.08)] flex items-center justify-between">
@@ -572,51 +611,82 @@
 			</div>
 		</div>
 
-		<!-- How It Works -->
+	{:else if activeTab === 'logs'}
+		<!-- Subscription Logs -->
 		<div class="bg-white rounded-2xl border border-[rgba(19,20,23,0.15)] overflow-hidden">
-			<div class="px-6 py-4 border-b border-[rgba(19,20,23,0.08)]">
-				<h2 class="text-base font-semibold text-[#131417]">How Pricing Works</h2>
+			<div class="px-6 py-4 border-b border-[rgba(19,20,23,0.08)] flex items-center justify-between">
+				<h2 class="text-base font-semibold text-[#131417]">Subscription Logs</h2>
+				<span class="text-sm text-[#656767]">{(data as any).historyTotal || 0} entr{(data as any).historyTotal !== 1 ? 'ies' : 'y'}</span>
 			</div>
-			<div class="px-6 py-5 space-y-4 text-sm text-[#656767]">
-				<div>
-					<h3 class="font-semibold text-[#131417] mb-1">What happens when you edit a price</h3>
-					<ol class="list-decimal list-inside space-y-1.5 ml-1">
-						<li>A <strong>new Stripe Price</strong> is created with the updated amount (Stripe prices are immutable, so a new one is always created).</li>
-						<li>The previous Stripe Price is <strong>deactivated</strong> so it can no longer be used for new checkouts.</li>
-						<li>The new Stripe Price ID is saved to the shared <code class="bg-[#F6F7F8] px-1.5 py-0.5 rounded text-xs font-mono">plan_pricing</code> database table.</li>
-						<li>The DEV application reads the <code class="bg-[#F6F7F8] px-1.5 py-0.5 rounded text-xs font-mono">plan_pricing</code> table at checkout to get the current Stripe Price ID.</li>
-					</ol>
-				</div>
-
-				<div>
-					<h3 class="font-semibold text-[#131417] mb-1">Impact on existing subscribers</h3>
-					<ul class="list-disc list-inside space-y-1.5 ml-1">
-						<li>Existing subscribers <strong>keep their current price</strong> until their subscription is manually updated in Stripe.</li>
-						<li>Only <strong>new subscriptions</strong> will use the updated price.</li>
-						<li>To migrate existing subscribers, use the Stripe Dashboard or Stripe API to update their subscription's price.</li>
-					</ul>
-				</div>
-
-				<div>
-					<h3 class="font-semibold text-[#131417] mb-1">Adding a new category</h3>
-					<ul class="list-disc list-inside space-y-1.5 ml-1">
-						<li>Click "Add Category" to create a new plan tier.</li>
-						<li>For paid plans, a <strong>Stripe Product</strong> and <strong>Stripe Price</strong> are automatically created.</li>
-						<li>Free plans (price = 0) do not create Stripe resources.</li>
-						<li>After adding, update the DEV app's checkout flow to include the new plan as an option.</li>
-					</ul>
-				</div>
-
-				<div>
-					<h3 class="font-semibold text-[#131417] mb-1">DEV app integration</h3>
-					<p>The DEV application should read from the <code class="bg-[#F6F7F8] px-1.5 py-0.5 rounded text-xs font-mono">plan_pricing</code> table instead of using hardcoded price IDs. Update the DEV app's <code class="bg-[#F6F7F8] px-1.5 py-0.5 rounded text-xs font-mono">getStripePriceId()</code> function in <code class="bg-[#F6F7F8] px-1.5 py-0.5 rounded text-xs font-mono">src/lib/stripe/config.server.ts</code> to query this table. This way, price changes here are automatically reflected in the customer checkout flow.</p>
-				</div>
-
-				<div class="bg-[#FFF9E6] border border-[#E6D490] rounded-lg px-4 py-3">
-					<p class="text-[#856404]">
-						<strong>Important:</strong> The display price shown on the DEV app's payment page (e.g. "&#163;599/month" in the Founder plan card) is currently hardcoded in the DEV app's <code class="bg-white/50 px-1 py-0.5 rounded text-xs font-mono">FOUNDER_PLAN</code> config. After changing a price here, also update the display value in the DEV app's <code class="bg-white/50 px-1 py-0.5 rounded text-xs font-mono">src/lib/census/config.ts</code> to keep them in sync.
-					</p>
-				</div>
+			<div class="overflow-x-auto">
+				<table class="w-full text-sm">
+					<thead>
+						<tr class="border-b border-[rgba(19,20,23,0.08)] bg-[#F9F9F8]">
+							<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider cursor-pointer select-none hover:text-[#131417]" onclick={() => toggleLogSort('date')}>
+								Date <span class="text-[10px]">{logSortIcon('date')}</span>
+							</th>
+							<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider cursor-pointer select-none hover:text-[#131417]" onclick={() => toggleLogSort('organization')}>
+								Organization <span class="text-[10px]">{logSortIcon('organization')}</span>
+							</th>
+							<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider cursor-pointer select-none hover:text-[#131417]" onclick={() => toggleLogSort('email')}>
+								Owner Email <span class="text-[10px]">{logSortIcon('email')}</span>
+							</th>
+							<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider cursor-pointer select-none hover:text-[#131417]" onclick={() => toggleLogSort('action')}>
+								Action <span class="text-[10px]">{logSortIcon('action')}</span>
+							</th>
+							<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider cursor-pointer select-none hover:text-[#131417]" onclick={() => toggleLogSort('from_plan')}>
+								From Plan <span class="text-[10px]">{logSortIcon('from_plan')}</span>
+							</th>
+							<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider cursor-pointer select-none hover:text-[#131417]" onclick={() => toggleLogSort('to_plan')}>
+								To Plan <span class="text-[10px]">{logSortIcon('to_plan')}</span>
+							</th>
+							<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider cursor-pointer select-none hover:text-[#131417]" onclick={() => toggleLogSort('amount')}>
+								Amount <span class="text-[10px]">{logSortIcon('amount')}</span>
+							</th>
+							<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider">Stripe TX ID</th>
+							<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider cursor-pointer select-none hover:text-[#131417]" onclick={() => toggleLogSort('performed_by')}>
+								Performed By <span class="text-[10px]">{logSortIcon('performed_by')}</span>
+							</th>
+						</tr>
+					</thead>
+					<tbody>
+						{#each filteredAndSortedLogs as entry}
+							<tr class="border-b border-[rgba(19,20,23,0.05)] hover:bg-[#FAFAF9] transition-colors">
+								<td class="px-6 py-3.5 text-[#656767]">{formatDate(entry.created_at)}</td>
+								<td class="px-6 py-3.5">
+									<div class="flex flex-col">
+										<span class="font-medium text-[#131417]">{entry.org_name || '--'}</span>
+										{#if entry.org_id}
+											<span class="text-xs text-[#656767] font-mono">{entry.org_id.slice(0, 8)}...</span>
+										{/if}
+									</div>
+								</td>
+								<td class="px-6 py-3.5 text-[#656767]">{entry.owner_email || '--'}</td>
+								<td class="px-6 py-3.5 text-[#131417]">{entry.action || entry.action_type || '--'}</td>
+								<td class="px-6 py-3.5">
+									<span class="capitalize text-[#131417]">{entry.from_plan || '--'}</span>
+								</td>
+								<td class="px-6 py-3.5">
+									<span class="capitalize text-[#131417]">{entry.to_plan || '--'}</span>
+								</td>
+								<td class="px-6 py-3.5 text-[#131417]">
+									{entry.amount != null ? `£${Number(entry.amount).toFixed(2)}` : '--'}
+								</td>
+								<td class="px-6 py-3.5">
+									<span class="text-xs font-mono text-[#656767]">{entry.stripe_transaction_id || '--'}</span>
+								</td>
+								<td class="px-6 py-3.5">
+									<span class="text-[#656767]">{entry.admin_email || entry.performed_by || entry.admin_user_id || '--'}</span>
+								</td>
+							</tr>
+						{/each}
+						{#if filteredAndSortedLogs.length === 0}
+							<tr>
+								<td colspan="9" class="px-6 py-12 text-center text-[#656767]">No subscription history found</td>
+							</tr>
+						{/if}
+					</tbody>
+				</table>
 			</div>
 		</div>
 	{/if}
