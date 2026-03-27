@@ -1,6 +1,6 @@
 import type { PageServerLoad } from './$types';
 import { listAllAccounts } from '$lib/supabase/admin-queries';
-import { maskEmail } from '$lib/utils/masking';
+
 
 export const load: PageServerLoad = async ({ url, locals }) => {
 	const page = parseInt(url.searchParams.get('page') || '1', 10);
@@ -63,20 +63,20 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 				for (const m of membersResult.data || []) {
 					if (m.role === 'owner' && !orgEmailMap.has(m.org_id)) {
 						const email = emailByUserId.get(m.user_id);
-						if (email) orgEmailMap.set(m.org_id, maskEmail(email));
+						if (email) orgEmailMap.set(m.org_id, email);
 					}
 				}
 
 				for (const uid of adminUserIds) {
 					const email = emailByUserId.get(uid);
-					if (email) adminEmailMap.set(uid, maskEmail(email));
+					if (email) adminEmailMap.set(uid, email);
 				}
 			}
 		} else if (adminUserIds.length > 0) {
 			const { data: usersData } = await locals.serviceClient.auth.admin.listUsers({ page: 1, perPage: 1000 });
 			for (const u of usersData?.users || []) {
 				if (adminUserIds.includes(u.id)) {
-					adminEmailMap.set(u.id, maskEmail(u.email || ''));
+					adminEmailMap.set(u.id, u.email || '');
 				}
 			}
 		}

@@ -107,6 +107,7 @@
 	let editingKey = $state<string | null>(null);
 	let editMonthlyGBP = $state(0);
 	let editAnnualGBP = $state(0);
+	let editOriginalGBP = $state(0);
 	let editLabel = $state('');
 	let editDescription = $state('');
 	let saving = $state(false);
@@ -119,6 +120,7 @@
 	let newLabel = $state('');
 	let newMonthlyGBP = $state(0);
 	let newAnnualGBP = $state(0);
+	let newOriginalGBP = $state(0);
 	let newDescription = $state('');
 
 	function buildParams(overrides: Record<string, string> = {}): URLSearchParams {
@@ -161,6 +163,7 @@
 		editingKey = entry.plan_key;
 		editMonthlyGBP = entry.monthly_price_pence / 100;
 		editAnnualGBP = entry.annual_price_pence / 100;
+		editOriginalGBP = (entry.original_price_pence || 0) / 100;
 		editLabel = entry.label;
 		editDescription = entry.description;
 		saveError = '';
@@ -187,7 +190,8 @@
 					label: editLabel,
 					description: editDescription,
 					monthly_price_pence: Math.round(editMonthlyGBP * 100),
-					annual_price_pence: Math.round(editAnnualGBP * 100)
+					annual_price_pence: Math.round(editAnnualGBP * 100),
+					original_price_pence: Math.round(editOriginalGBP * 100)
 				})
 			});
 
@@ -221,7 +225,8 @@
 					label: newLabel.trim(),
 					description: newDescription.trim(),
 					monthly_price_pence: Math.round(newMonthlyGBP * 100),
-					annual_price_pence: Math.round(newAnnualGBP * 100)
+					annual_price_pence: Math.round(newAnnualGBP * 100),
+					original_price_pence: Math.round(newOriginalGBP * 100)
 				})
 			});
 
@@ -233,6 +238,7 @@
 			newLabel = '';
 			newMonthlyGBP = 0;
 			newAnnualGBP = 0;
+			newOriginalGBP = 0;
 			newDescription = '';
 			showNewForm = false;
 			await invalidateAll();
@@ -469,6 +475,21 @@
 								/>
 							</div>
 						</div>
+						<div>
+							<label for="new-original" class="block text-xs font-medium text-[#656767] mb-1">Original Price (GBP)</label>
+							<div class="relative">
+								<span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-[#656767]">&pound;</span>
+								<input
+									id="new-original"
+									type="number"
+									bind:value={newOriginalGBP}
+									min="0"
+									step="0.01"
+									class="w-full pl-7 pr-3 py-2 text-sm border border-[rgba(19,20,23,0.15)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E4BE9]/30 focus:border-[#2E4BE9]"
+								/>
+							</div>
+							<p class="text-[10px] text-[#656767] mt-1">Crossed-out price / "You save" text</p>
+						</div>
 						<div class="sm:col-span-2">
 							<label for="new-desc" class="block text-xs font-medium text-[#656767] mb-1">Description</label>
 							<input
@@ -500,6 +521,7 @@
 							<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider">Plan</th>
 							<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider">Monthly</th>
 							<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider">Annual</th>
+							<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider">Original Price</th>
 							<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider">Stripe Price ID</th>
 							<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider">Description</th>
 							<th class="px-6 py-3 text-left font-semibold text-[#656767] text-xs uppercase tracking-wider">Actions</th>
@@ -534,6 +556,18 @@
 											<input
 												type="number"
 												bind:value={editAnnualGBP}
+												min="0"
+												step="0.01"
+												class="w-28 pl-6 pr-2 py-1.5 text-sm border border-[rgba(19,20,23,0.15)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E4BE9]/30"
+											/>
+										</div>
+									</td>
+									<td class="px-6 py-3">
+										<div class="relative">
+											<span class="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-[#656767]">&pound;</span>
+											<input
+												type="number"
+												bind:value={editOriginalGBP}
 												min="0"
 												step="0.01"
 												class="w-28 pl-6 pr-2 py-1.5 text-sm border border-[rgba(19,20,23,0.15)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E4BE9]/30"
@@ -581,6 +615,16 @@
 									</td>
 									<td class="px-6 py-3 text-[#131417]">
 										{entry.annual_price_pence > 0 ? formatPriceGBP(entry.annual_price_pence) + '/yr' : '--'}
+									</td>
+									<td class="px-6 py-3 text-[#131417]">
+										{#if entry.original_price_pence > 0}
+											<span class="line-through text-[#656767]">{formatPriceGBP(entry.original_price_pence)}</span>
+											{#if entry.annual_price_pence > 0}
+												<span class="text-xs text-green-600 ml-1">Save {formatPriceGBP(entry.original_price_pence - entry.annual_price_pence)}</span>
+											{/if}
+										{:else}
+											--
+										{/if}
 									</td>
 									<td class="px-6 py-3">
 										{#if entry.stripe_price_id}
@@ -656,9 +700,6 @@
 								<td class="px-6 py-3.5">
 									<div class="flex flex-col">
 										<span class="font-medium text-[#131417]">{entry.org_name || '--'}</span>
-										{#if entry.org_id}
-											<span class="text-xs text-[#656767] font-mono">{entry.org_id.slice(0, 8)}...</span>
-										{/if}
 									</div>
 								</td>
 								<td class="px-6 py-3.5 text-[#656767]">{entry.owner_email || '--'}</td>

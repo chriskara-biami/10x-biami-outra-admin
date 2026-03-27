@@ -48,7 +48,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 
 	const body = await request.json();
-	const { plan_key, label, description, monthly_price_pence, annual_price_pence } = body;
+	const { plan_key, label, description, monthly_price_pence, annual_price_pence, original_price_pence } = body;
 
 	if (!plan_key || !label) {
 		throw error(400, 'plan_key and label are required');
@@ -107,6 +107,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 			description: description || '',
 			monthly_price_pence: monthly_price_pence || 0,
 			annual_price_pence: annual_price_pence || 0,
+			original_price_pence: original_price_pence || 0,
 			stripe_product_id: stripeProductId,
 			stripe_price_id: stripePriceId,
 			updated_at: new Date().toISOString()

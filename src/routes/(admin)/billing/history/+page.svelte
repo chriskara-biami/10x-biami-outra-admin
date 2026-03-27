@@ -115,9 +115,6 @@
 							<td class="px-6 py-3.5">
 								<div class="flex flex-col">
 									<span class="font-medium text-[#131417]">{entry.org_name || '--'}</span>
-									{#if entry.org_id}
-										<span class="text-xs text-[#656767] font-mono">{entry.org_id.slice(0, 8)}...</span>
-									{/if}
 								</div>
 							</td>
 							<td class="px-6 py-3.5 text-[#656767]">{entry.owner_email || '--'}</td>

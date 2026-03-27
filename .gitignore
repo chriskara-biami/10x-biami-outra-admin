@@ -63,3 +63,6 @@ html-examples/
 # MD Files
 SUPABASE_CONFIG.md
 TEST_CREDENTIALS.md
+
+# other
+.mcp.json
