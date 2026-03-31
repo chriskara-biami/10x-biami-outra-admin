@@ -346,7 +346,7 @@
 						{#each filteredAndSortedAccounts as account}
 							<tr
 								class="border-b border-[rgba(19,20,23,0.05)] hover:bg-[#FAFAF9] transition-colors cursor-pointer"
-								onclick={() => goto(`/accounts/${account.org_id}`)}
+								onclick={() => goto(`/billing/${account.org_id}`)}
 							>
 								<td class="px-6 py-3 text-[#131417]">{account.email || '--'}</td>
 								<td class="px-6 py-3">

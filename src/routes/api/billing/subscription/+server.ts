@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { hasPermission } from '$lib/utils/permissions';
 import { createAuditEntry } from '$lib/utils/audit';
 import { purgeOrgData } from '$lib/services/purge';
+import { generateTxId } from '$lib/utils/tx-id';
 
 export const DELETE: RequestHandler = async (event) => {
 	const { serviceClient, adminRoles, user, requestId } = event.locals;
@@ -95,6 +96,20 @@ export const DELETE: RequestHandler = async (event) => {
 			request_id: requestId
 		});
 
+		// Fetch pricing for the cancelled plan
+		const { data: pricing } = await serviceClient
+			.from('plan_pricing')
+			.select('monthly_price_pence')
+			.eq('plan_key', org.plan)
+			.eq('is_active', true)
+			.single();
+
+		const txId = generateTxId(
+			user.email || '',
+			org.plan,
+			pricing?.monthly_price_pence ?? null
+		);
+
 		// Insert billing history record
 		const { error: historyError } = await serviceClient
 			.from('billing_history')
@@ -104,7 +119,8 @@ export const DELETE: RequestHandler = async (event) => {
 				from_plan: org.plan,
 				to_plan: null,
 				reason,
-				performed_by: user.id
+				performed_by: user.id,
+				stripe_transaction_id: txId
 			});
 
 		if (historyError) {

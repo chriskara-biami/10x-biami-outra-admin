@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import { hasPermission } from '$lib/utils/permissions';
 import { createAuditEntry } from '$lib/utils/audit';
 import { PLAN_ENTITLEMENTS } from '$lib/config/plan-entitlements';
+import { generateTxId } from '$lib/utils/tx-id';
 
 export const POST: RequestHandler = async (event) => {
 	const { serviceClient, adminRoles, user, requestId } = event.locals;
@@ -77,6 +78,20 @@ export const POST: RequestHandler = async (event) => {
 			}
 		}
 
+		// Fetch pricing for the new plan
+		const { data: pricing } = await serviceClient
+			.from('plan_pricing')
+			.select('monthly_price_pence')
+			.eq('plan_key', new_plan)
+			.eq('is_active', true)
+			.single();
+
+		const txId = generateTxId(
+			user.email || '',
+			new_plan,
+			pricing?.monthly_price_pence ?? null
+		);
+
 		// Insert billing history record
 		const { error: historyError } = await serviceClient
 			.from('billing_history')
@@ -87,7 +102,8 @@ export const POST: RequestHandler = async (event) => {
 				to_plan: new_plan,
 				reason,
 				performed_by: user.id,
-				effective_date: planStartedAt
+				effective_date: planStartedAt,
+				stripe_transaction_id: txId
 			});
 
 		if (historyError) {

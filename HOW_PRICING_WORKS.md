@@ -22,6 +22,8 @@
 
 ## DEV app integration
 
-The DEV application should read from the `plan_pricing` table instead of using hardcoded price IDs. Update the DEV app's `getStripePriceId()` function in `src/lib/stripe/config.server.ts` to query this table. This way, price changes here are automatically reflected in the customer checkout flow.
+The DEV (frontend) application reads the Stripe Price ID directly from the shared `plan_pricing` database table. When you update a price in the admin panel, the new Stripe Price ID is saved to the database and the DEV app's checkout flow automatically uses the updated price — no env variable changes or redeployment needed.
 
-> **Important:** The display price shown on the DEV app's payment page (e.g. "£599/month" in the Founder plan card) is currently hardcoded in the DEV app's `FOUNDER_PLAN` config. After changing a price here, also update the display value in the DEV app's `src/lib/census/config.ts` to keep them in sync.
+The relevant function is `getStripePriceId()` in `dev/src/lib/stripe/config.server.ts`, which queries the `plan_pricing` table at checkout time.
+
+> **Note:** The display price shown on the DEV app's payment page (e.g. "£599/month") is driven by the `plan_pricing` store in `dev/src/lib/stores/pricing.ts`, which also reads from the same database table.
