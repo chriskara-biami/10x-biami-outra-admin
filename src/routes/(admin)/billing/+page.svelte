@@ -256,36 +256,39 @@
 	</div>
 
 	<!-- Sub-tabs -->
-	<div class="flex items-center gap-1 bg-white rounded-lg border border-[rgba(19,20,23,0.15)] p-1 w-fit">
+	<nav class="p-2 bg-white rounded-[999px] flex items-center gap-2 w-fit">
 		<button
 			onclick={() => (activeTab = 'users')}
-			class="px-4 py-2 text-sm font-medium rounded-md transition-colors {activeTab === 'users' ? 'bg-[#2E4BE9] text-white' : 'text-[#656767] hover:text-[#131417] hover:bg-[#F6F7F8]'}"
+			class="h-8 px-6 py-2 rounded-[999px] flex items-center justify-center border transition-colors duration-200 text-sm font-semibold leading-5
+				{activeTab === 'users' ? 'bg-[#EFF1FF] border-[#4D61F4] text-[#2E4BE9]' : 'border-transparent text-[#2D2E2E] hover:bg-[#F5F5F5]'}"
 		>
 			Users
 		</button>
 		<button
 			onclick={() => (activeTab = 'pricing')}
-			class="px-4 py-2 text-sm font-medium rounded-md transition-colors {activeTab === 'pricing' ? 'bg-[#2E4BE9] text-white' : 'text-[#656767] hover:text-[#131417] hover:bg-[#F6F7F8]'}"
+			class="h-8 px-6 py-2 rounded-[999px] flex items-center justify-center border transition-colors duration-200 text-sm font-semibold leading-5
+				{activeTab === 'pricing' ? 'bg-[#EFF1FF] border-[#4D61F4] text-[#2E4BE9]' : 'border-transparent text-[#2D2E2E] hover:bg-[#F5F5F5]'}"
 		>
 			Pricing
 		</button>
 		<button
 			onclick={() => (activeTab = 'logs')}
-			class="px-4 py-2 text-sm font-medium rounded-md transition-colors {activeTab === 'logs' ? 'bg-[#2E4BE9] text-white' : 'text-[#656767] hover:text-[#131417] hover:bg-[#F6F7F8]'}"
+			class="h-8 px-6 py-2 rounded-[999px] flex items-center justify-center border transition-colors duration-200 text-sm font-semibold leading-5
+				{activeTab === 'logs' ? 'bg-[#EFF1FF] border-[#4D61F4] text-[#2E4BE9]' : 'border-transparent text-[#2D2E2E] hover:bg-[#F5F5F5]'}"
 		>
 			Subscription Logs
 		</button>
-	</div>
+	</nav>
 
 	<!-- Status Messages -->
 	{#if saveError}
-		<div class="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700 flex items-center justify-between">
+		<div class="bg-red-50 border border-red-200 rounded-full px-4 py-3 text-sm text-red-700 flex items-center justify-between">
 			<span>{saveError}</span>
 			<button onclick={() => (saveError = '')} class="text-red-400 hover:text-red-600">&times;</button>
 		</div>
 	{/if}
 	{#if saveSuccess}
-		<div class="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm text-green-700 flex items-center justify-between">
+		<div class="bg-green-50 border border-green-200 rounded-full px-4 py-3 text-sm text-green-700 flex items-center justify-between">
 			<span>{saveSuccess}</span>
 			<button onclick={() => (saveSuccess = '')} class="text-green-400 hover:text-green-600">&times;</button>
 		</div>
@@ -416,7 +419,7 @@
 				<h2 class="text-base font-semibold text-[#131417]">Plan Pricing</h2>
 				<button
 					onclick={() => (showNewForm = !showNewForm)}
-					class="rounded-lg bg-[#2E4BE9] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#4D61F4] transition-colors"
+					class="rounded-full bg-[#2E4BE9] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#4D61F4] transition-colors"
 				>
 					{showNewForm ? 'Cancel' : 'Add Category'}
 				</button>
@@ -505,7 +508,7 @@
 						<button
 							onclick={addCategory}
 							disabled={!newKey.trim() || !newLabel.trim() || saving}
-							class="rounded-lg bg-[#2E4BE9] px-4 py-2 text-sm font-medium text-white hover:bg-[#4D61F4] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+							class="rounded-full bg-[#2E4BE9] px-4 py-2 text-sm font-medium text-white hover:bg-[#4D61F4] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
 						>
 							{saving ? 'Creating...' : 'Add Category'}
 						</button>
@@ -589,7 +592,7 @@
 											<button
 												onclick={saveEdit}
 												disabled={saving}
-												class="rounded bg-[#2E4BE9] px-2 py-1 text-xs font-medium text-white hover:bg-[#4D61F4] disabled:opacity-50 transition-colors"
+												class="rounded-full bg-[#2E4BE9] px-2 py-1 text-xs font-medium text-white hover:bg-[#4D61F4] disabled:opacity-50 transition-colors"
 											>
 												{saving ? '...' : 'Save'}
 											</button>
@@ -637,7 +640,7 @@
 									<td class="px-6 py-3">
 										<button
 											onclick={() => startEdit(entry)}
-											class="rounded border border-[rgba(19,20,23,0.15)] px-2 py-1 text-xs font-medium text-[#656767] hover:text-[#131417] hover:bg-[#F6F7F8] transition-colors"
+											class="rounded-full border border-[rgba(19,20,23,0.15)] px-2 py-1 text-xs font-medium text-[#656767] hover:text-[#131417] hover:bg-[#F6F7F8] transition-colors"
 										>
 											Edit
 										</button>
