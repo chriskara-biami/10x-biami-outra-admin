@@ -142,3 +142,59 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		throw error(500, `Stripe error: ${err.message}`);
 	}
 };
+
+/**
+ * DELETE /api/pricing?plan_key=xxx — archive a plan price
+ *
+ * Soft-deletes the plan in DB (is_active = false) and archives the
+ * associated Stripe Price and Product. Stripe Prices cannot be hard
+ * deleted; archiving is the documented approach and preserves history.
+ */
+export const DELETE: RequestHandler = async ({ url, locals }) => {
+	if (!hasPermission(locals.adminRoles, ['billing:mutate'])) {
+		throw error(403, 'Insufficient permissions');
+	}
+
+	const plan_key = url.searchParams.get('plan_key');
+	if (!plan_key) {
+		throw error(400, 'plan_key is required');
+	}
+
+	const { data: existing, error: fetchError } = await locals.serviceClient
+		.from('plan_pricing')
+		.select('*')
+		.eq('plan_key', plan_key)
+		.single();
+
+	if (fetchError || !existing) {
+		throw error(404, 'Plan not found');
+	}
+
+	try {
+		if (existing.stripe_price_id || existing.stripe_product_id) {
+			const stripe = getStripe();
+			if (existing.stripe_price_id) {
+				await stripe.prices.update(existing.stripe_price_id, { active: false });
+			}
+			if (existing.stripe_product_id) {
+				await stripe.products.update(existing.stripe_product_id, { active: false });
+			}
+		}
+
+		const { error: dbError } = await locals.serviceClient
+			.from('plan_pricing')
+			.update({ is_active: false, updated_at: new Date().toISOString() })
+			.eq('plan_key', plan_key);
+
+		if (dbError) {
+			console.error('[Pricing] DB delete error:', dbError);
+			throw error(500, 'Failed to delete pricing');
+		}
+
+		return json({ success: true, plan_key });
+	} catch (err: any) {
+		if (err.status) throw err;
+		console.error('[Pricing] Stripe archive error:', err);
+		throw error(500, `Stripe error: ${err.message}`);
+	}
+};

@@ -3,6 +3,7 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import { formatPriceGBP } from '$lib/config/plan-entitlements';
 	import AccountSearch from '$lib/components/admin/AccountSearch.svelte';
+	import ConfirmDialog from '$lib/components/admin/ConfirmDialog.svelte';
 
 	let { data }: { data: PageData } = $props();
 
@@ -114,6 +115,10 @@
 	let saveError = $state('');
 	let saveSuccess = $state('');
 
+	// Delete state
+	let deleteEntry = $state<any>(null);
+	let deleting = $state(false);
+
 	// New category form
 	let showNewForm = $state(false);
 	let newKey = $state('');
@@ -205,6 +210,43 @@
 			saveError = err.message || 'Failed to save pricing';
 		} finally {
 			saving = false;
+		}
+	}
+
+	function startDelete(entry: any) {
+		deleteEntry = entry;
+		saveError = '';
+		saveSuccess = '';
+	}
+
+	function cancelDelete() {
+		if (deleting) return;
+		deleteEntry = null;
+	}
+
+	async function confirmDelete() {
+		if (!deleteEntry) return;
+		deleting = true;
+		saveError = '';
+		saveSuccess = '';
+
+		const entry = deleteEntry;
+
+		try {
+			const res = await fetch(`/api/pricing?plan_key=${encodeURIComponent(entry.plan_key)}`, {
+				method: 'DELETE'
+			});
+
+			const result = await res.json().catch(() => ({}));
+			if (!res.ok) throw new Error(result.message || 'Failed to delete');
+
+			saveSuccess = `Deleted "${entry.label}".`;
+			deleteEntry = null;
+			await invalidateAll();
+		} catch (err: any) {
+			saveError = err.message || 'Failed to delete pricing';
+		} finally {
+			deleting = false;
 		}
 	}
 
@@ -638,12 +680,20 @@
 									</td>
 									<td class="px-6 py-3 text-[#656767]">{entry.description}</td>
 									<td class="px-6 py-3">
-										<button
-											onclick={() => startEdit(entry)}
-											class="rounded-full border border-[rgba(19,20,23,0.15)] px-2 py-1 text-xs font-medium text-[#656767] hover:text-[#131417] hover:bg-[#F6F7F8] transition-colors"
-										>
-											Edit
-										</button>
+										<div class="flex items-center gap-2">
+											<button
+												onclick={() => startEdit(entry)}
+												class="rounded-full border border-[rgba(19,20,23,0.15)] px-2 py-1 text-xs font-medium text-[#656767] hover:text-[#131417] hover:bg-[#F6F7F8] transition-colors"
+											>
+												Edit
+											</button>
+											<button
+												onclick={() => startDelete(entry)}
+												class="rounded-full border border-red-200 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 transition-colors"
+											>
+												Delete
+											</button>
+										</div>
 									</td>
 								</tr>
 							{/if}
@@ -735,3 +785,14 @@
 		</div>
 	{/if}
 </div>
+
+<ConfirmDialog
+	open={!!deleteEntry}
+	title="Delete pricing category"
+	message={deleteEntry
+		? `This will archive "${deleteEntry.label}" (${deleteEntry.plan_key}) and deactivate its Stripe price and product. Existing subscriptions are not affected. This cannot be undone from the UI.`
+		: ''}
+	confirmPhrase={deleteEntry ? `delete ${deleteEntry.plan_key}` : ''}
+	onConfirm={confirmDelete}
+	onCancel={cancelDelete}
+/>
